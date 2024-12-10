@@ -62,3 +62,5 @@ resource secretAdminPassword2 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
 }
 
 output loginServer string = containerRegistry.properties.loginServer
+
+#disable-next-line outputs-should-not-contain-secrets
