@@ -59,11 +59,34 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Purge existing Key Vault
+      - name: Cleanup soft-deleted resources
         run: |
-          az keyvault purge --name ${{ env.KEY_VAULT_NAME }} || true
-          # Wait a bit for the purge to complete
-          sleep 30
+          # Purge Key Vault if it exists in soft-deleted state
+          echo "Checking for soft-deleted Key Vault..."
+          az keyvault list-deleted --query "[?name=='${{ env.KEY_VAULT_NAME }}']" -o tsv && {
+            echo "Purging soft-deleted Key Vault..."
+            az keyvault purge --name ${{ env.KEY_VAULT_NAME }}
+            # Wait for purge to complete
+            sleep 30
+          }
+
+          # Delete Container Registry if it exists
+          echo "Checking for existing Container Registry..."
+          az acr show --name ${{ env.REGISTRY_NAME }} --resource-group BCSAI2024-DEVOPS-STUDENTS-A-DEV && {
+            echo "Deleting existing Container Registry..."
+            az acr delete --name ${{ env.REGISTRY_NAME }} --resource-group BCSAI2024-DEVOPS-STUDENTS-A-DEV --yes
+            # Wait for deletion to complete
+            sleep 30
+          }
+
+          # Delete App Service if it exists
+          echo "Checking for existing App Service..."
+          az webapp show --name ${{ env.APP_SERVICE_NAME }} --resource-group BCSAI2024-DEVOPS-STUDENTS-A-DEV && {
+            echo "Deleting existing App Service..."
+            az webapp delete --name ${{ env.APP_SERVICE_NAME }} --resource-group BCSAI2024-DEVOPS-STUDENTS-A-DEV
+            # Wait for deletion to complete
+            sleep 30
+          }
 
       - name: Deploy Bicep Templates
         id: deploy
