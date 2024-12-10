@@ -1,61 +1,44 @@
-@description('Required. Name of your Azure Container Registry.')
-@minLength(5)
-@maxLength(50)
-param name string
-
-@description('Enable admin user that have push / pull permission to the registry.')
-param acrAdminUserEnabled bool = true
-
-@description('Optional. Location for all resources.')
+@description('The location for all resources')
 param location string = resourceGroup().location
 
-@description('The name of the App Service')
-param appServiceName string
+@description('The name prefix for all resources')
+param namePrefix string
 
-@description('The name of the container image')
-param containerRegistryImageName string
-
-@description('The version/tag of the container image')
-param containerRegistryImageVersion string
-
+var containerRegistryName = '${namePrefix}acr'
 module containerRegistry 'modules/container-registry.bicep' = {
-  name: 'containerRegistryJorge'
+  name: 'containerRegistry'
   params: {
-    name: name
+    name: containerRegistryName
     location: location
-    acrAdminUserEnabled: acrAdminUserEnabled
+    acrAdminUserEnabled: true
   }
 }
 
+var appServicePlanName = '${namePrefix}-asp'
 module appServicePlan 'modules/app-service-plan.bicep' = {
-  name: 'appServicePlanJorge'
+  name: 'appServicePlan'
   params: {
-    name: 'appServicePlanJorge'
+    name: appServicePlanName
     location: location
-    sku: {
-      name: 'Basic'
-      capacity: 1
-      family: 'B'
-      size: 'B1'
-      tier: 'Basic'
-    }
   }
 }
 
-
-module appService 'modules/app-service.bicep' = {
-  name: 'appServiceJorge'
+var webAppName = '${namePrefix}-app'
+module webApp 'modules/app-service.bicep' = {
+  name: 'webApp'
   params: {
-    name: appServiceName
+    name: webAppName
     location: location
-    appServicePlanName: appServicePlan.name
-    containerRegistryName: containerRegistry.name
-    containerRegistryImageName: containerRegistryImageName
-    containerRegistryImageVersion: containerRegistryImageVersion
+    appServicePlanName: appServicePlan.outputs.name
+    containerRegistryName: containerRegistryName
+    containerRegistryImageName: 'your-image-name'
+    containerRegistryImageVersion: 'latest'
   }
+  dependsOn: [
+    containerRegistry
+    appServicePlan
+  ]
 }
 
-output containerRegistryLoginServer string = containerRegistry.outputs.loginServer
-output appServiceId string = appService.outputs.id
-output appServiceName string = appService.outputs.name
-output appServiceDefaultHostName string = appService.outputs.defaultHostName
+output webAppHostName string = webApp.outputs.defaultHostName
+output acrLoginServer string = containerRegistry.outputs.loginServer 

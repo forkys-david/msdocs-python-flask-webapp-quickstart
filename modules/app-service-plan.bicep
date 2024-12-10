@@ -13,7 +13,7 @@ param sku object = {
   tier: 'Basic'
 }
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: name
   location: location
   sku: sku
@@ -24,4 +24,4 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
 }
 
 output id string = appServicePlan.id
-output name string = appServicePlan.name
+output name string = appServicePlan.name 

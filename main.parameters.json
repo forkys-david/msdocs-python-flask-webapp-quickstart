@@ -2,20 +2,11 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+      "namePrefix": {
+        "value": "Jorge-App"
+      },
       "location": {
         "value": "northeurope"
-      },
-      "name": {
-        "value": "JorgeAppRegistry"
-      },
-      "appServiceName": {
-        "value": "JorgeAppService"
-      },
-      "containerRegistryImageName": {
-        "value": "JorgeAppRegistry"
-      },
-      "containerRegistryImageVersion": {
-        "value": "latest"
       }
     }
-}
+  } 
