@@ -11,6 +11,9 @@ env:
   IMAGE_BASE_NAME: python-flask-app
   REGISTRY_LOGIN_SERVER: jorgeappacr.azurecr.io
   APP_SERVICE_NAME: jorgeapp-app
+  KEY_VAULT_NAME: jorgeappkv
+  KEY_VAULT_SECRET_NAME_ACR_USERNAME: acr-username
+  KEY_VAULT_SECRET_NAME_ACR_PASSWORD: acr-password1
 
 jobs:
   build-bicep:
@@ -31,9 +34,9 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build Bicep Template
+      - name: Build Bicep Templates
         run: |
-          # Validate the Bicep template
+          az bicep build --file modules/key-vault.bicep
           az bicep build --file main.bicep
 
   deploy-infrastructure:
@@ -54,7 +57,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy Bicep Template
+      - name: Deploy Bicep Templates
         run: |
           az deployment group create \
             --resource-group BCSAI2024-DEVOPS-STUDENTS-A-DEV \
@@ -73,21 +76,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Get ACR credentials
-        id: get-acr-creds
-        run: |
-          ACR_USERNAME=$(az acr credential show -n ${{ env.REGISTRY_NAME }} --query "username" -o tsv)
-          ACR_PASSWORD=$(az acr credential show -n ${{ env.REGISTRY_NAME }} --query "passwords[0].value" -o tsv)
-          echo "::add-mask::$ACR_PASSWORD"
-          echo "username=$ACR_USERNAME" >> $GITHUB_OUTPUT
-          echo "password=$ACR_PASSWORD" >> $GITHUB_OUTPUT
+      - name: Get ACR credentials from Key Vault
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            echo "REGISTRY_USERNAME=$(az keyvault secret show --name ${{ env.KEY_VAULT_SECRET_NAME_ACR_USERNAME }} --vault-name ${{ env.KEY_VAULT_NAME }} --query value -o tsv)" >> $GITHUB_ENV
+            echo "REGISTRY_PASSWORD=$(az keyvault secret show --name ${{ env.KEY_VAULT_SECRET_NAME_ACR_PASSWORD }} --vault-name ${{ env.KEY_VAULT_NAME }} --query value -o tsv)" >> $GITHUB_ENV
 
       - name: Login to Azure Container Registry
         uses: azure/docker-login@v1
         with:
           login-server: ${{ env.REGISTRY_LOGIN_SERVER }}
-          username: ${{ steps.get-acr-creds.outputs.username }}
-          password: ${{ steps.get-acr-creds.outputs.password }}
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
 
       - name: Set image version
         id: image-version

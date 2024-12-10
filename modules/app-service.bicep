@@ -16,9 +16,23 @@ param containerRegistryImageName string
 @description('The version/tag of the container image')
 param containerRegistryImageVersion string
 
-@description('The Container Registry resource')
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: containerRegistryName
+@description('Docker Registry Server URL')
+@secure()
+param dockerRegistryServerUrl string
+
+@description('Docker Registry Server Username')
+@secure()
+param dockerRegistryServerUserName string
+
+@description('Docker Registry Server Password')
+@secure()
+param dockerRegistryServerPassword string
+
+var dockerAppSettings = {
+  DOCKER_REGISTRY_SERVER_URL: dockerRegistryServerUrl
+  DOCKER_REGISTRY_SERVER_USERNAME: dockerRegistryServerUserName
+  DOCKER_REGISTRY_SERVER_PASSWORD: dockerRegistryServerPassword
+  WEBSITES_ENABLE_APP_SERVICE_STORAGE: 'false'
 }
 
 resource appService 'Microsoft.Web/sites@2022-09-01' = {
@@ -28,30 +42,16 @@ resource appService 'Microsoft.Web/sites@2022-09-01' = {
   properties: {
     serverFarmId: resourceId('Microsoft.Web/serverfarms', appServicePlanName)
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${containerRegistry.properties.loginServer}/${containerRegistryImageName}:${containerRegistryImageVersion}'
+      linuxFxVersion: 'DOCKER|${containerRegistryName}.azurecr.io/${containerRegistryImageName}:${containerRegistryImageVersion}'
       appCommandLine: ''
-      appSettings: [
-        {
-          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
-          value: 'false'
-        }
-        {
-          name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: 'https://${containerRegistry.properties.loginServer}'
-        }
-        {
-          name: 'DOCKER_REGISTRY_SERVER_USERNAME'
-          value: containerRegistry.listCredentials().username
-        }
-        {
-          name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
-          value: containerRegistry.listCredentials().passwords[0].value
-        }
-      ]
+      appSettings: [for setting in items(dockerAppSettings): {
+        name: setting.key
+        value: setting.value
+      }]
     }
   }
 }
 
 output id string = appService.id
 output name string = appService.name
-output defaultHostName string = appService.properties.defaultHostName 
+output defaultHostName string = appService.properties.defaultHostName
