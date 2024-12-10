@@ -64,3 +64,9 @@ resource secretAdminPassword2 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
 output loginServer string = containerRegistry.properties.loginServer
 
 #disable-next-line outputs-should-not-contain-secrets
+output adminUserName string = containerRegistry.listCredentials().username
+
+#disable-next-line outputs-should-not-contain-secrets
+output adminPassword string = containerRegistry.listCredentials().passwords[0].value
+#disable-next-line outputs-should-not-contain-secrets
+output adminPassword2 string = containerRegistry.listCredentials().passwords[1].value
