@@ -21,13 +21,37 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   location: location
   properties: {
     enabledForDeployment: enableVaultForDeployment
+    enabledForTemplateDeployment: true
+    enabledForDiskEncryption: true
     tenantId: subscription().tenantId
-    accessPolicies: []
+    accessPolicies: [
+      {
+        tenantId: subscription().tenantId
+        objectId: '7200f83e-ec45-4915-8c52-fb94147cfe5a'  // Service Principal Object ID
+        permissions: {
+          secrets: [
+            'get'
+            'list'
+            'set'
+          ]
+        }
+      }
+      {
+        tenantId: subscription().tenantId
+        objectId: 'f248a218-1ef9-47bf-9928-ae47093fd442'  // ARM Service Principal
+        permissions: {
+          secrets: [
+            'get'
+            'list'
+          ]
+        }
+      }
+    ]
     sku: {
       family: 'A'
       name: 'standard'
     }
-    enableRbacAuthorization: true
+    enableRbacAuthorization: false  // Using access policies instead of RBAC
   }
 }
 
