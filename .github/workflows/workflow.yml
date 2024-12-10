@@ -59,8 +59,10 @@ jobs:
 
       - name: Deploy Bicep Templates
         run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
           az deployment group create \
             --resource-group BCSAI2024-DEVOPS-STUDENTS-A-DEV \
+            --name "main-${TIMESTAMP}" \
             --template-file main.bicep \
             --parameters main.parameters.json
 
