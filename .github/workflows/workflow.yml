@@ -7,10 +7,10 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY_NAME: JorgeAppRegistry
+  REGISTRY_NAME: jorgeappacr
   IMAGE_BASE_NAME: python-flask-app
-  REGISTRY_LOGIN_SERVER: JorgeAppRegistry.azurecr.io
-  APP_SERVICE_NAME: JorgeAppService
+  REGISTRY_LOGIN_SERVER: jorgeappacr.azurecr.io
+  APP_SERVICE_NAME: jorgeapp-app
 
 jobs:
   build-bicep:
